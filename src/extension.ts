@@ -7,17 +7,25 @@ interface IDictionary {
     [key: string]: number;
 }
 
-interface IDictionaryArray {
-    [key: string]: number[];
+interface IDictionaryTextDoc {
+    [key: string]: vscode.TextDocument;
 }
 
-function getSummarizedMetrics(docs: IDictionaryArray)
+function getSummarizedMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTextDoc)
 {
 	let data: number[] = [0, 0];
-	for (let key in docs)
+	let delta = 0;
+	for (let key in docsPrevState)
 	{
-		data[0] += docs[key][0];
-		data[1] += docs[key][1];
+		delta = docsObj[key].lineCount - docsPrevState[key];
+		if (delta > 0)
+		{
+			data[0] += delta;
+		}
+		else if (delta < 0)
+		{
+			data[1] -= delta;
+		}
 	}
 	return data;
 }
@@ -30,9 +38,8 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "devmetrics" is now active!');
 
-	let currentDocNewLineCount: number = 0;
 	const docsPrevState: IDictionary = {};
-	const docsDelta: IDictionaryArray = {};
+	const docsObj: IDictionaryTextDoc = {};
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -48,11 +55,11 @@ export function activate(context: vscode.ExtensionContext) {
 			{} // Webview options.
 		  );
 
-		  panel.webview.html = getWebviewContent(getSummarizedMetrics(docsDelta));
+		  panel.webview.html = getWebviewContent(getSummarizedMetrics(docsPrevState, docsObj));
 
 		  const updateWebview = () => {
 
-			panel.webview.html = getWebviewContent(getSummarizedMetrics(docsDelta));
+			panel.webview.html = getWebviewContent(getSummarizedMetrics(docsPrevState, docsObj));
 		  };
 	
 		  // Set initial content
@@ -67,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 		&& vscode.window.activeTextEditor?.document.fileName in Object.keys(docsPrevState) === false)
 		{
 			docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
-			docsDelta[vscode.window.activeTextEditor?.document.fileName as string] = [0, 0];
+			docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
 		}
 
 	vscode.window.onDidChangeActiveTextEditor(function(event) {
@@ -75,22 +82,22 @@ export function activate(context: vscode.ExtensionContext) {
 			&& vscode.window.activeTextEditor?.document.lineCount !== undefined
 			&& Object.keys(docsPrevState).includes(event?.document.fileName) === false)
 		{
-			docsPrevState[event?.document.fileName] = vscode.window.activeTextEditor?.document.lineCount as number;
-			docsDelta[vscode.window.activeTextEditor?.document.fileName as string] = [0, 0];
+			docsPrevState[event?.document.fileName] = event.document.lineCount as number;
+			docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document;
 		}
 	});
 
-	vscode.workspace.onDidSaveTextDocument(function(event) {
-		if (event.lineCount - docsPrevState[event.fileName] > 0)
-		{
-			docsDelta[event.fileName][0] += event.lineCount - docsPrevState[event.fileName];
-		}
-		else if (event.lineCount - docsPrevState[event.fileName] < 0)
-		{
-			docsDelta[event.fileName][1] -= event.lineCount - docsPrevState[event.fileName];
-		}
-		docsPrevState[event.fileName] = event.lineCount;
-	});
+	// vscode.workspace.onDidSaveTextDocument(function(event) {
+	// 	if (event.lineCount - docsPrevState[event.fileName] > 0)
+	// 	{
+	// 		docsDelta[event.fileName][0] += event.lineCount - docsPrevState[event.fileName];
+	// 	}
+	// 	else if (event.lineCount - docsPrevState[event.fileName] < 0)
+	// 	{
+	// 		docsDelta[event.fileName][1] -= event.lineCount - docsPrevState[event.fileName];
+	// 	}
+	// 	docsPrevState[event.fileName] = event.lineCount;
+	// });
 
 	context.subscriptions.push(disposable);
 }
@@ -107,7 +114,7 @@ function getWebviewContent(data: number[]) {
 	  <title>DevMetrics data</title>
   </head>
   <body>
-	  <h1 style="color: green;">Lines of code written during current session: ${data[0]}</h1>
+	  <h1 style="color: green;">Lines of code added during current session: ${data[0]}</h1>
 	  <h1 style="color: red;">Lines of code deleted during current session: ${data[1]}</h1>
   </body>
   </html>`;
