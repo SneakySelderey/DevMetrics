@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "devmetrics.showLines",
-        "title": "Show lines metrics"
+        "command": "devmetrics.showData",
+        "title": "Show DevMetrics data"
       }
     ]
   },
