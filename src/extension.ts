@@ -7,15 +7,19 @@ interface IDictionary {
     [key: string]: number;
 }
 
-function getSummarizedMetrics(docs: IDictionary)
+interface IDictionaryArray {
+    [key: string]: number[];
+}
+
+function getSummarizedMetrics(docs: IDictionaryArray)
 {
-	let lineCountDelta = 0;
+	let data: number[] = [0, 0];
 	for (let key in docs)
 	{
-		console.log(key + " " + docs[key]);
-		lineCountDelta += docs[key];
+		data[0] += docs[key][0];
+		data[1] += docs[key][1];
 	}
-	return lineCountDelta;
+	return data;
 }
 
 // This method is called when your extension is activated
@@ -27,7 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "devmetrics" is now active!');
 
 	let currentDocNewLineCount: number = 0;
-	const docs: IDictionary = {};
+	const docsPrevState: IDictionary = {};
+	const docsDelta: IDictionaryArray = {};
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -36,8 +41,6 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 
-		let linesCount = getSummarizedMetrics(docs);
-
 		const panel = vscode.window.createWebviewPanel(
 			'devMetrics', // Identifies the type of the webview.
 			'DevMetrics', // Title of the panel displayed to the user
@@ -45,11 +48,11 @@ export function activate(context: vscode.ExtensionContext) {
 			{} // Webview options.
 		  );
 
-		  panel.webview.html = getWebviewContent(linesCount);
+		  panel.webview.html = getWebviewContent(getSummarizedMetrics(docsDelta));
 
 		  const updateWebview = () => {
 
-			panel.webview.html = getWebviewContent(getSummarizedMetrics(docs));
+			panel.webview.html = getWebviewContent(getSummarizedMetrics(docsDelta));
 		  };
 	
 		  // Set initial content
@@ -59,21 +62,34 @@ export function activate(context: vscode.ExtensionContext) {
 		  setInterval(updateWebview, 1000);
 	});
 
-	// if (vscode.window.activeTextEditor?.document.fileName !== undefined && vscode.window.activeTextEditor?.document.lineCount !== undefined)
-	// 	{
-	// 		docs[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
-	// 	}
+	if (vscode.window.activeTextEditor?.document.fileName !== undefined 
+		&& vscode.window.activeTextEditor?.document.lineCount !== undefined 
+		&& vscode.window.activeTextEditor?.document.fileName in Object.keys(docsPrevState) === false)
+		{
+			docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
+			docsDelta[vscode.window.activeTextEditor?.document.fileName as string] = [0, 0];
+		}
 
 	vscode.window.onDidChangeActiveTextEditor(function(event) {
-		if (event?.document.fileName !== undefined && vscode.window.activeTextEditor?.document.lineCount !== undefined)
+		if (event?.document.fileName !== undefined 
+			&& vscode.window.activeTextEditor?.document.lineCount !== undefined
+			&& Object.keys(docsPrevState).includes(event?.document.fileName) === false)
 		{
-			docs[event?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
+			docsPrevState[event?.document.fileName] = vscode.window.activeTextEditor?.document.lineCount as number;
+			docsDelta[vscode.window.activeTextEditor?.document.fileName as string] = [0, 0];
 		}
 	});
 
 	vscode.workspace.onDidSaveTextDocument(function(event) {
-		currentDocNewLineCount = event.lineCount as number;
-		docs[event.fileName as string] = event.lineCount as number;
+		if (event.lineCount - docsPrevState[event.fileName] > 0)
+		{
+			docsDelta[event.fileName][0] += event.lineCount - docsPrevState[event.fileName];
+		}
+		else if (event.lineCount - docsPrevState[event.fileName] < 0)
+		{
+			docsDelta[event.fileName][1] -= event.lineCount - docsPrevState[event.fileName];
+		}
+		docsPrevState[event.fileName] = event.lineCount;
 	});
 
 	context.subscriptions.push(disposable);
@@ -82,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
-function getWebviewContent(linesCount: number) {
+function getWebviewContent(data: number[]) {
 	return `<!DOCTYPE html>
   <html lang="en">
   <head>
@@ -91,7 +107,8 @@ function getWebviewContent(linesCount: number) {
 	  <title>DevMetrics data</title>
   </head>
   <body>
-	  <h1>Lines of code written during current session: ${linesCount}</h1>
+	  <h1 style="color: green;">Lines of code written during current session: ${data[0]}</h1>
+	  <h1 style="color: red;">Lines of code deleted during current session: ${data[1]}</h1>
   </body>
   </html>`;
   }
