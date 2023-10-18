@@ -129,10 +129,19 @@ function getWebviewContent(data: any[]) {
 			<title>DevMetrics data</title>
 		</head>
 		<body>
-			<h3 style="color: green;">Lines of code added during current session: ${data[0]}</h2>
-			<h3 style="color: red;">Lines of code deleted during current session: ${data[1]}</h3>
-			<h3>Top file by additions: ${data[2][data[2].length - 1][0]} - ${data[2][data[2].length - 1][1]} additions</h3>
-			<h3>Top file by deletions: ${data[3][0][0]} - ${data[3][0][1]} deletions</h3>
+			<h2>Coding statistics</h2>
+			<ul>
+			<li>
+				<h3>Lines statistics</h3>
+				<p style="color: green; font-size:16px;">Lines of code added during current session: ${data[0]}</p>
+				<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${data[1]}</p>
+			</li>
+			<li>
+				<h3>Files statistics</h3>
+				<p style="color: green; font-size:16px;">Top file by additions: ${data[2][data[2].length - 1][0]} - ${data[2][data[2].length - 1][1]} additions</p>
+				<p style="color: red; font-size:16px;">Top file by deletions: ${data[3][0][0]} - ${data[3][0][1]} deletions</p>
+			</li>
+			</ul>
 		</body>
 	</html>`;
   }
