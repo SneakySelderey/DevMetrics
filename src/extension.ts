@@ -87,8 +87,6 @@ export function activate(context: vscode.ExtensionContext) {
 			'DevMetrics', // Title of the panel displayed to the user
 			vscode.ViewColumn.One, // Editor column to show the new webview panel in.
 			{
-				// Enable scripts in the webview
-				enableScripts: true
 			} // Webview options.
 		  );
 		//create webview using metrics returned by getSummarizedMetrics()
