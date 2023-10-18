@@ -11,9 +11,15 @@ interface IDictionaryTextDoc {
     [key: string]: vscode.TextDocument;
 }
 
+interface IDictionaryArray {
+    [key: string]: number[];
+}
+
 function getSummarizedMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTextDoc)
 {
-	let data: number[] = [0, 0];
+	let data: any[] = [0, 0];
+	let addByDoc: any[] = [];
+	let delByDoc: any[] = [];
 	let delta = 0;
 	for (let key in docsPrevState)
 	{
@@ -21,11 +27,29 @@ function getSummarizedMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTe
 		if (delta > 0)
 		{
 			data[0] += delta;
+			addByDoc.push([key, delta]);
 		}
 		else if (delta < 0)
 		{
 			data[1] -= delta;
+			delByDoc.push([key, -delta]);
 		}
+	}
+	if (addByDoc.length !== 0)
+	{
+		data.push(addByDoc.sort((a, b) => a[1] < b[1] ? -1 : 1));
+	}
+	else
+	{
+		data.push([['N/A', 0]]);
+	}
+	if (delByDoc.length !== 0)
+	{
+		data.push(delByDoc.sort((a, b) => a[1] > b[1] ? -1 : 1));
+	}
+	else
+	{
+		data.push([['N/A', 0]]);
 	}
 	return data;
 }
@@ -52,7 +76,10 @@ export function activate(context: vscode.ExtensionContext) {
 			'devMetrics', // Identifies the type of the webview.
 			'DevMetrics', // Title of the panel displayed to the user
 			vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-			{} // Webview options.
+			{
+				// Enable scripts in the webview
+				enableScripts: true
+			} // Webview options.
 		  );
 
 		  panel.webview.html = getWebviewContent(getSummarizedMetrics(docsPrevState, docsObj));
@@ -87,35 +114,25 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// vscode.workspace.onDidSaveTextDocument(function(event) {
-	// 	if (event.lineCount - docsPrevState[event.fileName] > 0)
-	// 	{
-	// 		docsDelta[event.fileName][0] += event.lineCount - docsPrevState[event.fileName];
-	// 	}
-	// 	else if (event.lineCount - docsPrevState[event.fileName] < 0)
-	// 	{
-	// 		docsDelta[event.fileName][1] -= event.lineCount - docsPrevState[event.fileName];
-	// 	}
-	// 	docsPrevState[event.fileName] = event.lineCount;
-	// });
-
 	context.subscriptions.push(disposable);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
-function getWebviewContent(data: number[]) {
+function getWebviewContent(data: any[]) {
 	return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-	  <meta charset="UTF-8">
-	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	  <title>DevMetrics data</title>
-  </head>
-  <body>
-	  <h1 style="color: green;">Lines of code added during current session: ${data[0]}</h1>
-	  <h1 style="color: red;">Lines of code deleted during current session: ${data[1]}</h1>
-  </body>
-  </html>`;
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>DevMetrics data</title>
+		</head>
+		<body>
+			<h3 style="color: green;">Lines of code added during current session: ${data[0]}</h2>
+			<h3 style="color: red;">Lines of code deleted during current session: ${data[1]}</h3>
+			<h3>Top file by additions: ${data[2][data[2].length - 1][0]} - ${data[2][data[2].length - 1][1]} additions</h3>
+			<h3>Top file by deletions: ${data[3][0][0]} - ${data[3][0][1]} deletions</h3>
+		</body>
+	</html>`;
   }
