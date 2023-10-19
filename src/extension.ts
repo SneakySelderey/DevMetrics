@@ -16,6 +16,9 @@ interface IDictionaryArray {
 }
 
 class Metrics
+/**
+ * Class that represents all kind of tracked metrics
+ */
 {
 	docsPrevState: IDictionary = {}; // track initial state of docs
 	docsObj: IDictionaryTextDoc = {}; // track current state of docs
@@ -24,36 +27,34 @@ class Metrics
 	additionsByDocs: any[] = [['N/A', 0]]; // number of additions for each active doc
 	deletionsByDocs: any[] = [['N/A', 0]]; // number of deletions for each active doc
 
-	updateMetrics(): void
 	/**
-   * Updates metrics class for current session.
-   * 
-   * @param docsPrevState - (number[]) Amount of lines in active files before the changes
-   * @param docsObj - (number[]) Amount of lines in active files after the changes
-   * @returns void
-	*/
-{
-	this.additionsCount = 0, this.deletionsCount = 0;
-	this.additionsByDocs = [['N/A', 0]], this.deletionsByDocs = [['N/A', 0]];
-	let delta = 0; // counter for delta between original doc and modified doc
-	for (let key in this.docsPrevState)
+	 * Updates metrics class for current session.
+	 * 
+	 * @returns void
+	 */
+	updateMetrics(): void
 	{
-		delta = this.docsObj[key].lineCount - this.docsPrevState[key];
-		if (delta > 0) // if the delta is positive, push the element to additions
+		this.additionsCount = 0, this.deletionsCount = 0;
+		this.additionsByDocs = [['N/A', 0]], this.deletionsByDocs = [['N/A', 0]];
+		let delta = 0; // counter for delta between original doc and modified doc
+		for (let key in this.docsPrevState)
 		{
-			this.additionsCount += delta;
-			this.additionsByDocs.push([key, delta]);
+			delta = this.docsObj[key].lineCount - this.docsPrevState[key];
+			if (delta > 0) // if the delta is positive, push the element to additions
+			{
+				this.additionsCount += delta;
+				this.additionsByDocs.push([key, delta]);
+			}
+			else if (delta < 0) // if the delta is negative, push the element to deletions
+			{
+				this.deletionsCount -= delta;
+				this.deletionsByDocs.push([key, -delta]);
+			}
 		}
-		else if (delta < 0) // if the delta is negative, push the element to deletions
-		{
-			this.deletionsCount -= delta;
-			this.deletionsByDocs.push([key, -delta]);
-		}
-	}
-	this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
-	this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
+		this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
+		this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
 
-}
+	}
 }
 
 // This method is called when your extension is activated
@@ -82,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 			{
 			} // Webview options.
 		  );
-		//create webview using metrics returned by getUpdatedMetrics()
+		//create webview using metrics
 		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
@@ -127,7 +128,7 @@ function getWebviewContent(metrics: Metrics)
 /**
    * Returns HTML strucure for WebView to display.
    * 
-   * @param x - (Metrics) Metric to display. Usually returned by getUpdatedMetrics().
+   * @param x - (Metrics) Metric to display.
    * @returns - HTML structure.
 */
 {
