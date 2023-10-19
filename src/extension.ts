@@ -34,6 +34,7 @@ class Metrics
 	*/
 {
 	this.additionsCount = 0, this.deletionsCount = 0;
+	this.additionsByDocs = [['N/A', 0]], this.deletionsByDocs = [['N/A', 0]];
 	let delta = 0; // counter for delta between original doc and modified doc
 	for (let key in this.docsPrevState)
 	{
