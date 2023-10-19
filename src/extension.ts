@@ -26,9 +26,9 @@ class Metrics
 	deletionsCount = 0; // number of overall deletions
 	additionsByDocs = [['N/A', 0]]; // number of additions for each active doc
 	deletionsByDocs = [['N/A', 0]]; // number of deletions for each active doc
-	secondsCount = 0;
-	minuteCount = 0;
-	hourCount = 0;
+	secondsCount = 0; // number of seconds for time tracker
+	minuteCount = 0; // number of minutes for time tracker
+	hourCount = 0; // number of hours for time tracker
 
 	/**
 	 * Updates metrics class for current session.
@@ -54,8 +54,10 @@ class Metrics
 				this.deletionsByDocs.push([key, -delta]);
 			}
 		}
-		this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
-		this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
+		this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
+		this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
+		
+		// this block of code updates the timer every second
 		this.secondsCount++;
 		if (this.secondsCount === 60)
 		{
