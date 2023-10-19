@@ -6,7 +6,8 @@ DevMetrics is a VS code extension that allows you to track your developer statis
 
 Current features are:
 - Tracking of additions and deletions in active files
-- Tracking of the most modified files
+- Tracking of top files by additions\deletions
+- Tracking of time spent in IDE
 
 <img src="images/features_example.png" width="400" />
 
