@@ -17,24 +17,27 @@ interface IDictionaryArray {
 
 class Metrics
 {
+	docsPrevState: IDictionary = {}; // track initial state of docs
+	docsObj: IDictionaryTextDoc = {}; // track current state of docs
 	additionsCount: number = 0; // number of overall additions
 	deletionsCount: number = 0; // number of overall deletions
 	additionsByDocs: any[] = [['N/A', 0]]; // number of additions for each active doc
 	deletionsByDocs: any[] = [['N/A', 0]]; // number of deletions for each active doc
 
-	updateMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTextDoc): void
-/**
+	updateMetrics(): void
+	/**
    * Updates metrics class for current session.
    * 
    * @param docsPrevState - (number[]) Amount of lines in active files before the changes
    * @param docsObj - (number[]) Amount of lines in active files after the changes
    * @returns void
-*/
+	*/
 {
+	this.additionsCount = 0, this.deletionsCount = 0;
 	let delta = 0; // counter for delta between original doc and modified doc
-	for (let key in docsPrevState)
+	for (let key in this.docsPrevState)
 	{
-		delta = docsObj[key].lineCount - docsPrevState[key];
+		delta = this.docsObj[key].lineCount - this.docsPrevState[key];
 		if (delta > 0) // if the delta is positive, push the element to additions
 		{
 			this.additionsCount += delta;
@@ -48,6 +51,7 @@ class Metrics
 	}
 	this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
 	this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
+
 }
 }
 
@@ -59,8 +63,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "devmetrics" is now active!');
 
-	const docsPrevState: IDictionary = {}; // track initial state of docs
-	const docsObj: IDictionaryTextDoc = {}; // track current state of docs
 	const metrics = new Metrics(); // metrics class
 
 	// The command has been defined in the package.json file
@@ -70,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 
-		metrics.updateMetrics(docsPrevState, docsObj);
+		metrics.updateMetrics();
 
 		const panel = vscode.window.createWebviewPanel(
 			'devMetrics', // Identifies the type of the webview.
@@ -83,7 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
 		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
-			metrics.updateMetrics(docsPrevState, docsObj);
+			metrics.updateMetrics();
 			panel.webview.html = getWebviewContent(metrics);
 		  };
 	
@@ -97,20 +99,20 @@ export function activate(context: vscode.ExtensionContext) {
 	// this block of code tracks the initial document if it was already opened on startup
 	if (vscode.window.activeTextEditor?.document.fileName !== undefined 
 		&& vscode.window.activeTextEditor?.document.lineCount !== undefined 
-		&& vscode.window.activeTextEditor?.document.fileName in Object.keys(docsPrevState) === false)
+		&& vscode.window.activeTextEditor?.document.fileName in Object.keys(metrics.docsPrevState) === false)
 		{
-			docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
-			docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
+			metrics.docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
+			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
 		}
 
 	// this block of code thacks all documents opened by users
 	vscode.window.onDidChangeActiveTextEditor(function(event) {
 		if (event?.document.fileName !== undefined 
 			&& vscode.window.activeTextEditor?.document.lineCount !== undefined
-			&& Object.keys(docsPrevState).includes(event?.document.fileName) === false)
+			&& Object.keys(metrics.docsPrevState).includes(event?.document.fileName) === false)
 		{
-			docsPrevState[event?.document.fileName] = event.document.lineCount as number;
-			docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document;
+			metrics.docsPrevState[event?.document.fileName] = event.document.lineCount as number;
+			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document;
 		}
 	});
 
