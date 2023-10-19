@@ -22,10 +22,13 @@ class Metrics
 {
 	docsPrevState: IDictionary = {}; // track initial state of docs
 	docsObj: IDictionaryTextDoc = {}; // track current state of docs
-	additionsCount: number = 0; // number of overall additions
-	deletionsCount: number = 0; // number of overall deletions
-	additionsByDocs: any[] = [['N/A', 0]]; // number of additions for each active doc
-	deletionsByDocs: any[] = [['N/A', 0]]; // number of deletions for each active doc
+	additionsCount = 0; // number of overall additions
+	deletionsCount = 0; // number of overall deletions
+	additionsByDocs = [['N/A', 0]]; // number of additions for each active doc
+	deletionsByDocs = [['N/A', 0]]; // number of deletions for each active doc
+	secondsCount = 0;
+	minuteCount = 0;
+	hourCount = 0;
 
 	/**
 	 * Updates metrics class for current session.
@@ -53,7 +56,17 @@ class Metrics
 		}
 		this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
 		this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
-
+		this.secondsCount++;
+		if (this.secondsCount === 60)
+		{
+			this.minuteCount++;
+			this.secondsCount = 0;
+		}
+		if (this.minuteCount === 60)
+		{
+			this.hourCount++;
+			this.minuteCount = 0;
+		}
 	}
 }
 
@@ -142,16 +155,22 @@ function getWebviewContent(metrics: Metrics)
 		<body>
 			<h2>Coding statistics</h2>
 			<ul>
-			<li>
-				<h3>Lines statistics</h3>
-				<p style="color: green; font-size:16px;">Lines of code added during current session: ${metrics.additionsCount}</p>
-				<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${metrics.deletionsCount}</p>
-			</li>
-			<li>
-				<h3>Files statistics</h3>
-				<p style="color: green; font-size:16px;">Top file by additions: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
-				<p style="color: red; font-size:16px;">Top file by deletions: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
-			</li>
+				<li>
+					<h3>Additions/deletions:</h3>
+					<p style="color: green; font-size:16px;">Lines of code added during current session: ${metrics.additionsCount}</p>
+					<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${metrics.deletionsCount}</p>
+				</li>
+				<li>
+					<h3>Top files by additions/deletions</h3>
+					<p style="color: green; font-size:16px;">Top file by additions: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+					<p style="color: red; font-size:16px;">Top file by deletions: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+				</li>
+			</ul>
+			<h2>Time statistics<h2>
+			<ul>
+				<li>
+				<p style="font-size:16px;">Time spent in IDE: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+				</li>
 			</ul>
 		</body>
 	</html>`;
