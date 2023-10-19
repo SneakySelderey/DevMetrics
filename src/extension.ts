@@ -15,53 +15,40 @@ interface IDictionaryArray {
     [key: string]: number[];
 }
 
-function getSummarizedMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTextDoc)
+class Metrics
+{
+	additionsCount: number = 0; // number of overall additions
+	deletionsCount: number = 0; // number of overall deletions
+	additionsByDocs: any[] = [['N/A', 0]]; // number of additions for each active doc
+	deletionsByDocs: any[] = [['N/A', 0]]; // number of deletions for each active doc
+
+	updateMetrics(docsPrevState: IDictionary, docsObj: IDictionaryTextDoc): void
 /**
-   * Returns list of metrics for current session.
+   * Updates metrics class for current session.
    * 
-   * @param x - (number[]) Amount of lines in active files before the changes
-   * @param y - (number[]) Amount of lines in active files after the changes
-   * @returns - (any[]) List of metrics for current session, where list[0] is number of additions,
-   * list[1] - number of deletions, list[2] - list of files sorted by number of additions,
-   * list[3] - list of files sorted by number of deletions. Each element of list[2] and list[3]
-   * looks like [filename, num of add or num of del].
+   * @param docsPrevState - (number[]) Amount of lines in active files before the changes
+   * @param docsObj - (number[]) Amount of lines in active files after the changes
+   * @returns void
 */
 {
-	let data: any[] = [0, 0]; // resulting list
-	let addByDoc: any[] = []; // number of additions for each active doc
-	let delByDoc: any[] = []; // number of deletions for each active doc
 	let delta = 0; // counter for delta between original doc and modified doc
 	for (let key in docsPrevState)
 	{
 		delta = docsObj[key].lineCount - docsPrevState[key];
 		if (delta > 0) // if the delta is positive, push the element to additions
 		{
-			data[0] += delta;
-			addByDoc.push([key, delta]);
+			this.additionsCount += delta;
+			this.additionsByDocs.push([key, delta]);
 		}
 		else if (delta < 0) // if the delta is negative, push the element to deletions
 		{
-			data[1] -= delta;
-			delByDoc.push([key, -delta]);
+			this.deletionsCount -= delta;
+			this.deletionsByDocs.push([key, -delta]);
 		}
 	}
-	if (addByDoc.length !== 0) // push sorted list of additions to line[2]
-	{
-		data.push(addByDoc.sort((a, b) => a[1] < b[1] ? -1 : 1));
-	}
-	else // if it is empty, push placeholder
-	{
-		data.push([['N/A', 0]]);
-	}
-	if (delByDoc.length !== 0) // push sorted list of deletions to line[3]
-	{
-		data.push(delByDoc.sort((a, b) => a[1] > b[1] ? -1 : 1));
-	}
-	else // if it is empty, push placeholder
-	{
-		data.push([['N/A', 0]]);
-	}
-	return data;
+	this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1);
+	this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1);
+}
 }
 
 // This method is called when your extension is activated
@@ -74,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const docsPrevState: IDictionary = {}; // track initial state of docs
 	const docsObj: IDictionaryTextDoc = {}; // track current state of docs
+	const metrics = new Metrics(); // metrics class
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -82,6 +70,8 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 
+		metrics.updateMetrics(docsPrevState, docsObj);
+
 		const panel = vscode.window.createWebviewPanel(
 			'devMetrics', // Identifies the type of the webview.
 			'DevMetrics', // Title of the panel displayed to the user
@@ -89,12 +79,12 @@ export function activate(context: vscode.ExtensionContext) {
 			{
 			} // Webview options.
 		  );
-		//create webview using metrics returned by getSummarizedMetrics()
-		  panel.webview.html = getWebviewContent(getSummarizedMetrics(docsPrevState, docsObj));
+		//create webview using metrics returned by getUpdatedMetrics()
+		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
-
-			panel.webview.html = getWebviewContent(getSummarizedMetrics(docsPrevState, docsObj));
+			metrics.updateMetrics(docsPrevState, docsObj);
+			panel.webview.html = getWebviewContent(metrics);
 		  };
 	
 		  // Set initial content
@@ -130,11 +120,11 @@ export function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
-function getWebviewContent(data: any[])
+function getWebviewContent(metrics: Metrics)
 /**
    * Returns HTML strucure for WebView to display.
    * 
-   * @param x - (any[]) Metric to display. Usually returned by getSummarizedMetrics().
+   * @param x - (Metrics) Metric to display. Usually returned by getUpdatedMetrics().
    * @returns - HTML structure.
 */
 {
@@ -150,13 +140,13 @@ function getWebviewContent(data: any[])
 			<ul>
 			<li>
 				<h3>Lines statistics</h3>
-				<p style="color: green; font-size:16px;">Lines of code added during current session: ${data[0]}</p>
-				<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${data[1]}</p>
+				<p style="color: green; font-size:16px;">Lines of code added during current session: ${metrics.additionsCount}</p>
+				<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${metrics.deletionsCount}</p>
 			</li>
 			<li>
 				<h3>Files statistics</h3>
-				<p style="color: green; font-size:16px;">Top file by additions: ${data[2][data[2].length - 1][0]} - ${data[2][data[2].length - 1][1]} additions</p>
-				<p style="color: red; font-size:16px;">Top file by deletions: ${data[3][0][0]} - ${data[3][0][1]} deletions</p>
+				<p style="color: green; font-size:16px;">Top file by additions: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+				<p style="color: red; font-size:16px;">Top file by deletions: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
 			</li>
 			</ul>
 		</body>
