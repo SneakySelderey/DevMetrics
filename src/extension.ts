@@ -76,10 +76,6 @@ function updateMetrics(metrics: Metrics)
 	for (let key in metrics.docsPrevState)
 	{
 		delta = metrics.docsObj[key].lineCount - metrics.docsPrevState[key];
-		if (key === "e:\\Coding\\ITMO\\Labs\\Software Engineering Tools\\Software Engineering Tools lab 3\\test\\test.py")
-		{
-			console.log(metrics.docsPrevState[key], metrics.docsObj[key].lineCount);
-		}
 		if (delta > 0) // if the delta is positive, push the element to additions
 		{
 			metrics.additionsCount += delta;
