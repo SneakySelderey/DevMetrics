@@ -47,16 +47,22 @@ class Metrics
 }
 
 function updateActiveDocument(metrics: Metrics)
+/**
+ * Updates list of active docs by checking if any doc was already opened on startup and, if so, adding it to the list.
+ * 
+ * @param metrics - Metrics class
+ * 
+ * @returns Metrics class
+ */
 {
-	// this block of code tracks the initial document if it was already opened on startup
 	if (vscode.window.activeTextEditor?.document.fileName !== undefined 
 		&& vscode.window.activeTextEditor?.document.lineCount !== undefined)
 		{
-			if (Object.keys(metrics.docsPrevState).includes(vscode.window.activeTextEditor?.document.fileName) === false)
+			if (Object.keys(metrics.docsPrevState).includes(vscode.window.activeTextEditor?.document.fileName) === false) // if the file was not opened by user before
 			{
-				metrics.docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
+				metrics.docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number; // save initial amount of lines for the file
 			}
-			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
+			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document; // save current amount of lines for the file
 		}
 	return metrics;
 }
@@ -64,9 +70,9 @@ function updateActiveDocument(metrics: Metrics)
 /**
  * Updates metrics class for current session.
  * 
- * @argument metrics - Metrics class to update
+ * @param metrics - Metrics class to update
  * 
- * @returns Metrics
+ * @returns Metrics class
  */
 function updateMetrics(metrics: Metrics)
 {
@@ -89,19 +95,6 @@ function updateMetrics(metrics: Metrics)
 	}
 	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
 	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
-	
-	// this block of code updates the timer every second
-	metrics.secondsCount++;
-	if (metrics.secondsCount === 60)
-	{
-		metrics.minuteCount++;
-		metrics.secondsCount = 0;
-	}
-	if (metrics.minuteCount === 60)
-	{
-		metrics.hourCount++;
-		metrics.minuteCount = 0;
-	}
 
 	return metrics;
 }
@@ -116,14 +109,34 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let metrics: Metrics;
 
-	if (context.globalState.keys().includes("metrics") === false)
+	if (context.globalState.keys().includes("metrics") === false) // check if metrics were already saved to global storage
 	{
 		metrics = new Metrics(); // metrics class
 	}
 	else
 	{
-		metrics = context.globalState.get("metrics") as Metrics;
+		metrics = context.globalState.get("metrics") as Metrics; // if metrics are in global storage, read them
 	}
+
+	const updateTimeTracker = () =>
+	/**
+	 * Arrow function to update time tracker timer.
+	 */
+	{
+		metrics.secondsCount++;
+		if (metrics.secondsCount === 60)
+		{
+			metrics.minuteCount++;
+			metrics.secondsCount = 0;
+		}
+		if (metrics.minuteCount === 60)
+		{
+			metrics.hourCount++;
+			metrics.minuteCount = 0;
+		}
+	};
+
+	setInterval(updateTimeTracker, 1000); // update time tracker every second
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -133,7 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// Display a message box to the user
 
 		metrics = updateMetrics(metrics);
-		context.globalState.update("metrics", metrics);
+		context.globalState.update("metrics", metrics); // write updated metrics to storage
 
 		const panel = vscode.window.createWebviewPanel(
 			'devMetrics', // Identifies the type of the webview.
@@ -147,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// update webview every second
 		  const updateWebview = () => {
 			metrics = updateMetrics(metrics);
-			context.globalState.update("metrics", metrics);
+			context.globalState.update("metrics", metrics); // write updated metrics to storage
 			panel.webview.html = getWebviewContent(metrics);
 		  };
 	
@@ -158,25 +171,28 @@ export function activate(context: vscode.ExtensionContext) {
 		  setInterval(updateWebview, 1000);
 	});
 
-	let resetDataCommand = vscode.commands.registerCommand('devmetrics.resetData', () => 
+	let resetDataCommand = vscode.commands.registerCommand('devmetrics.resetData', () =>
+	/**
+	 * This arrow function resets stored metrics to their default values.
+	 */
 	{
-		context.globalState.update("metrics", undefined);
-		metrics = new Metrics();
-		metrics = updateActiveDocument(metrics);
+		context.globalState.update("metrics", undefined); // delete metrics from storage
+		metrics = new Metrics(); // create new Metric object
+		metrics = updateActiveDocument(metrics); // update and write it to storage
 	});
 
 	metrics = updateActiveDocument(metrics);
 
-	// this block of code thacks all documents opened by users
+	// this block of code checks all documents opened by users
 	vscode.window.onDidChangeActiveTextEditor(function(event) {
 		if (event?.document.fileName !== undefined 
 			&& vscode.window.activeTextEditor?.document.lineCount !== undefined)
 		{
-			if (Object.keys(metrics.docsPrevState).includes(event?.document.fileName) === false)
+			if (Object.keys(metrics.docsPrevState).includes(event?.document.fileName) === false) // if the file was not opened by user before
 			{
-				metrics.docsPrevState[event?.document.fileName] = event.document.lineCount as number;
+				metrics.docsPrevState[event?.document.fileName] = event.document.lineCount as number; // save initial amount of lines for each files
 			}
-			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document;
+			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document; // save current state of file
 		}
 	});
 
