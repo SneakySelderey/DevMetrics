@@ -16,6 +16,10 @@
       {
         "command": "devmetrics.showData",
         "title": "Show DevMetrics data"
+      },
+      {
+        "command": "devmetrics.resetData",
+        "title": "Reset DevMetrics data"
       }
     ]
   },
