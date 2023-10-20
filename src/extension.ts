@@ -12,7 +12,7 @@ interface IDictionaryTextDoc {
 }
 
 interface IDictionaryArray {
-    [key: string]: number[];
+    [key: string]: any[];
 }
 
 class Metrics
@@ -20,56 +20,75 @@ class Metrics
  * Class that represents all kind of tracked metrics
  */
 {
-	docsPrevState: IDictionary = {}; // track initial state of docs
-	docsObj: IDictionaryTextDoc = {}; // track current state of docs
-	additionsCount = 0; // number of overall additions
-	deletionsCount = 0; // number of overall deletions
-	additionsByDocs = [['N/A', 0]]; // number of additions for each active doc
-	deletionsByDocs = [['N/A', 0]]; // number of deletions for each active doc
-	secondsCount = 0; // number of seconds for time tracker
-	minuteCount = 0; // number of minutes for time tracker
-	hourCount = 0; // number of hours for time tracker
-
-	/**
-	 * Updates metrics class for current session.
-	 * 
-	 * @returns void
-	 */
-	updateMetrics(): void
+	constructor(docsPrevState = {}, docsObj = {}, 
+		additionsCount = 0, deletionsCount = 0, additionsByDocs = [['N/A', 0]], 
+		deletionsByDocs = [['N/A', 0]], secondsCount = 0, minuteCount = 0, hourCount = 0)
 	{
-		this.additionsCount = 0, this.deletionsCount = 0;
-		this.additionsByDocs = [['N/A', 0]], this.deletionsByDocs = [['N/A', 0]];
-		let delta = 0; // counter for delta between original doc and modified doc
-		for (let key in this.docsPrevState)
+		this.docsPrevState = docsPrevState;
+		this.docsObj = docsObj;
+		this.additionsCount = additionsCount;
+		this.deletionsCount = deletionsCount;
+		this.additionsByDocs = additionsByDocs;
+		this.deletionsByDocs = deletionsByDocs;
+		this.secondsCount = secondsCount;
+		this.minuteCount = minuteCount;
+		this.hourCount = hourCount;
+	}
+
+	docsPrevState: IDictionary; // track initial state of docs
+	docsObj: IDictionaryTextDoc; // track current state of docs
+	additionsCount; // number of overall additions
+	deletionsCount; // number of overall deletions
+	additionsByDocs; // number of additions for each active doc
+	deletionsByDocs; // number of deletions for each active doc
+	secondsCount; // number of seconds for time tracker
+	minuteCount; // number of minutes for time tracker
+	hourCount; // number of hours for time tracker
+}
+
+/**
+ * Updates metrics class for current session.
+ * 
+ * @argument metrics - Metrics class to update
+ * 
+ * @returns Metrics
+ */
+function updateMetrics(metrics: Metrics)
+{
+	metrics.additionsCount = 0, metrics.deletionsCount = 0;
+	metrics.additionsByDocs = [['N/A', 0]], metrics.deletionsByDocs = [['N/A', 0]];
+	let delta = 0; // counter for delta between original doc and modified doc
+	for (let key in metrics.docsPrevState)
+	{
+		delta = metrics.docsObj[key].lineCount - metrics.docsPrevState[key];
+		if (delta > 0) // if the delta is positive, push the element to additions
 		{
-			delta = this.docsObj[key].lineCount - this.docsPrevState[key];
-			if (delta > 0) // if the delta is positive, push the element to additions
-			{
-				this.additionsCount += delta;
-				this.additionsByDocs.push([key, delta]);
-			}
-			else if (delta < 0) // if the delta is negative, push the element to deletions
-			{
-				this.deletionsCount -= delta;
-				this.deletionsByDocs.push([key, -delta]);
-			}
+			metrics.additionsCount += delta;
+			metrics.additionsByDocs.push([key, delta]);
 		}
-		this.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
-		this.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
-		
-		// this block of code updates the timer every second
-		this.secondsCount++;
-		if (this.secondsCount === 60)
+		else if (delta < 0) // if the delta is negative, push the element to deletions
 		{
-			this.minuteCount++;
-			this.secondsCount = 0;
-		}
-		if (this.minuteCount === 60)
-		{
-			this.hourCount++;
-			this.minuteCount = 0;
+			metrics.deletionsCount -= delta;
+			metrics.deletionsByDocs.push([key, -delta]);
 		}
 	}
+	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
+	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
+	
+	// this block of code updates the timer every second
+	metrics.secondsCount++;
+	if (metrics.secondsCount === 60)
+	{
+		metrics.minuteCount++;
+		metrics.secondsCount = 0;
+	}
+	if (metrics.minuteCount === 60)
+	{
+		metrics.hourCount++;
+		metrics.minuteCount = 0;
+	}
+
+	return metrics;
 }
 
 // This method is called when your extension is activated
@@ -80,7 +99,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "devmetrics" is now active!');
 
-	const metrics = new Metrics(); // metrics class
+	let metrics: Metrics;
+
+	if (context.globalState.keys().includes("metrics") === false)
+	{
+		metrics = new Metrics(); // metrics class
+	}
+	else
+	{
+		metrics = context.globalState.get("metrics") as Metrics;
+	}
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -89,7 +117,8 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 
-		metrics.updateMetrics();
+		metrics = updateMetrics(metrics);
+		context.globalState.update("metrics", metrics);
 
 		const panel = vscode.window.createWebviewPanel(
 			'devMetrics', // Identifies the type of the webview.
@@ -102,7 +131,8 @@ export function activate(context: vscode.ExtensionContext) {
 		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
-			metrics.updateMetrics();
+			metrics = updateMetrics(metrics);
+			context.globalState.update("metrics", metrics);
 			panel.webview.html = getWebviewContent(metrics);
 		  };
 	
