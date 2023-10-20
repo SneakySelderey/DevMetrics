@@ -14,4 +14,5 @@ Current features are:
 
 ## Usage
 
-Just enter ">Show DevMetrics data" command!
+- To see the metrics, type in "Show DevMetrics data" command
+- To reset the metrics to their default values, type in "Reset DevMetrics data" command
