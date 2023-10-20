@@ -89,19 +89,6 @@ function updateMetrics(metrics: Metrics)
 	}
 	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
 	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
-	
-	// this block of code updates the timer every second
-	metrics.secondsCount++;
-	if (metrics.secondsCount === 60)
-	{
-		metrics.minuteCount++;
-		metrics.secondsCount = 0;
-	}
-	if (metrics.minuteCount === 60)
-	{
-		metrics.hourCount++;
-		metrics.minuteCount = 0;
-	}
 
 	return metrics;
 }
@@ -124,6 +111,24 @@ export function activate(context: vscode.ExtensionContext) {
 	{
 		metrics = context.globalState.get("metrics") as Metrics;
 	}
+
+	const updateTimeTracker = () => 
+	{
+		// this block of code updates the timer every second
+		metrics.secondsCount++;
+		if (metrics.secondsCount === 60)
+		{
+			metrics.minuteCount++;
+			metrics.secondsCount = 0;
+		}
+		if (metrics.minuteCount === 60)
+		{
+			metrics.hourCount++;
+			metrics.minuteCount = 0;
+		}
+	};
+
+	setInterval(updateTimeTracker, 1000);
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
