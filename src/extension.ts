@@ -46,6 +46,21 @@ class Metrics
 	hourCount; // number of hours for time tracker
 }
 
+function updateActiveDocument(metrics: Metrics)
+{
+	// this block of code tracks the initial document if it was already opened on startup
+	if (vscode.window.activeTextEditor?.document.fileName !== undefined 
+		&& vscode.window.activeTextEditor?.document.lineCount !== undefined)
+		{
+			if (Object.keys(metrics.docsPrevState).includes(vscode.window.activeTextEditor?.document.fileName) === false)
+			{
+				metrics.docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
+			}
+			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
+		}
+	return metrics;
+}
+
 /**
  * Updates metrics class for current session.
  * 
@@ -61,6 +76,10 @@ function updateMetrics(metrics: Metrics)
 	for (let key in metrics.docsPrevState)
 	{
 		delta = metrics.docsObj[key].lineCount - metrics.docsPrevState[key];
+		if (key === "e:\\Coding\\ITMO\\Labs\\Software Engineering Tools\\Software Engineering Tools lab 3\\test\\test.py")
+		{
+			console.log(metrics.docsPrevState[key], metrics.docsObj[key].lineCount);
+		}
 		if (delta > 0) // if the delta is positive, push the element to additions
 		{
 			metrics.additionsCount += delta;
@@ -147,24 +166,20 @@ export function activate(context: vscode.ExtensionContext) {
 	{
 		context.globalState.update("metrics", undefined);
 		metrics = new Metrics();
+		metrics = updateActiveDocument(metrics);
 	});
 
-	// this block of code tracks the initial document if it was already opened on startup
-	if (vscode.window.activeTextEditor?.document.fileName !== undefined 
-		&& vscode.window.activeTextEditor?.document.lineCount !== undefined 
-		&& vscode.window.activeTextEditor?.document.fileName in Object.keys(metrics.docsPrevState) === false)
-		{
-			metrics.docsPrevState[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document.lineCount as number;
-			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = vscode.window.activeTextEditor?.document;
-		}
+	metrics = updateActiveDocument(metrics);
 
 	// this block of code thacks all documents opened by users
 	vscode.window.onDidChangeActiveTextEditor(function(event) {
 		if (event?.document.fileName !== undefined 
-			&& vscode.window.activeTextEditor?.document.lineCount !== undefined
-			&& Object.keys(metrics.docsPrevState).includes(event?.document.fileName) === false)
+			&& vscode.window.activeTextEditor?.document.lineCount !== undefined)
 		{
-			metrics.docsPrevState[event?.document.fileName] = event.document.lineCount as number;
+			if (Object.keys(metrics.docsPrevState).includes(event?.document.fileName) === false)
+			{
+				metrics.docsPrevState[event?.document.fileName] = event.document.lineCount as number;
+			}
 			metrics.docsObj[vscode.window.activeTextEditor?.document.fileName as string] = event.document;
 		}
 	});
