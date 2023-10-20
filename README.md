@@ -8,6 +8,7 @@ Current features are:
 - Tracking of additions and deletions in active files
 - Tracking of top files by additions\deletions
 - Tracking of time spent in IDE
+- Metrics data storage between VS Code sessions
 
 <img src="images/features_example.png" width="400" />
 
