@@ -22,7 +22,8 @@ class Metrics
 {
 	constructor(docsPrevState = {}, docsObj = {}, 
 		additionsCount = 0, deletionsCount = 0, additionsByDocs = [['N/A', 0]], 
-		deletionsByDocs = [['N/A', 0]], secondsCount = 0, minuteCount = 0, hourCount = 0)
+		deletionsByDocs = [['N/A', 0]], secondsCount = 0, minuteCount = 0, hourCount = 0,
+		currentMonth = (new Date().getMonth() + 1))
 	{
 		this.docsPrevState = docsPrevState;
 		this.docsObj = docsObj;
@@ -33,6 +34,7 @@ class Metrics
 		this.secondsCount = secondsCount;
 		this.minuteCount = minuteCount;
 		this.hourCount = hourCount;
+		this.currentMonth = currentMonth;
 	}
 
 	docsPrevState: IDictionary; // track initial state of docs
@@ -44,6 +46,7 @@ class Metrics
 	secondsCount; // number of seconds for time tracker
 	minuteCount; // number of minutes for time tracker
 	hourCount; // number of hours for time tracker
+	currentMonth;
 }
 
 function updateActiveDocument(metrics: Metrics)
@@ -67,6 +70,7 @@ function updateActiveDocument(metrics: Metrics)
 	return metrics;
 }
 
+function updateMetrics(metrics: Metrics)
 /**
  * Updates metrics class for current session.
  * 
@@ -74,8 +78,13 @@ function updateActiveDocument(metrics: Metrics)
  * 
  * @returns Metrics class
  */
-function updateMetrics(metrics: Metrics)
 {
+	if ((new Date().getMonth() + 1) !== metrics.currentMonth)
+	{
+		metrics = new Metrics(); // create new Metric object
+		metrics = updateActiveDocument(metrics); // update and write it to storage
+		return metrics;
+	}
 	metrics.additionsCount = 0, metrics.deletionsCount = 0;
 	metrics.additionsByDocs = [['N/A', 0]], metrics.deletionsByDocs = [['N/A', 0]];
 	let delta = 0; // counter for delta between original doc and modified doc
@@ -223,19 +232,19 @@ function getWebviewContent(metrics: Metrics)
 			<ul>
 				<li>
 					<h3>Additions/deletions:</h3>
-					<p style="color: green; font-size:16px;">Lines of code added during current session: ${metrics.additionsCount}</p>
-					<p style="color: red; font-size:16px;">Lines of code deleted during current session: ${metrics.deletionsCount}</p>
+					<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
+					<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
 				</li>
 				<li>
 					<h3>Top files by additions/deletions</h3>
-					<p style="color: green; font-size:16px;">Top file by additions: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
-					<p style="color: red; font-size:16px;">Top file by deletions: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+					<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+					<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
 				</li>
 			</ul>
 			<h2>Time statistics<h2>
 			<ul>
 				<li>
-				<p style="font-size:16px;">Time spent in IDE: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+				<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
 				</li>
 			</ul>
 		</body>
