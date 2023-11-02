@@ -21,7 +21,22 @@
         "command": "devmetrics.resetData",
         "title": "Reset DevMetrics data"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "DevMetrics",
+      "properties": {
+        "devmetrics.additionsGoal": {
+          "type": "number",
+          "default": 3000,
+          "description": "Sets global additions goal for the month (lines)"
+        },
+        "devmetrics.timeGoal": {
+          "type": "number",
+          "default": 75,
+          "description": "Sets global time goal for the month (hours)"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
