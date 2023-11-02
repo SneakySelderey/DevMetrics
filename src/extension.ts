@@ -300,9 +300,15 @@ function getWebviewContent(metrics: Metrics)
 					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
 					</li>
 				</ul>
-				<h2>Global goals progress</h2>
-				<p font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth}</p>
-				<p font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth}</p>
+				<h2>Global month goals progress</h2>
+				<ul>
+					<li>
+					<p style=font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth} lines</p>
+					</li>
+					<li>
+					<p style=font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth} hours</p>
+					</li>
+				</ul>
 			</body>
 		</html>`;
 	}
@@ -335,8 +341,12 @@ function getWebviewContent(metrics: Metrics)
 					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
 					</li>
 				</ul>
-				<h2>Global goals progress</h2>
-				<p font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth}</p>
+				<h2>Global month goals progress</h2>
+				<ul>
+					<li>
+					<p style=font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth} hours</p>
+					</li>
+				</ul>
 			</body>
 		</html>`;
 	}
@@ -369,8 +379,12 @@ function getWebviewContent(metrics: Metrics)
 					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
 					</li>
 				</ul>
-				<h2>Global goals progress</h2>
-				<p font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth}</p>
+				<h2>Global month goals progress</h2>
+				<ul>
+					<li>
+					<p style=font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth} lines</p>
+					</li>
+				</ul>
 			</body>
 		</html>`;
 	}
