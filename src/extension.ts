@@ -109,8 +109,8 @@ function updateMetrics(metrics: Metrics, config: vscode.WorkspaceConfiguration)
 	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
 	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
 
-	metrics.goalAdditionsMonth = config.get('devmetrics.additionsGoal') as number; // update goals
-	metrics.goalTimeMonth = config.get('devmetrics.timeGoal') as number;
+	metrics.goalAdditionsMonth = config.get('additionsGoal') as number; // update goals
+	metrics.goalTimeMonth = config.get('timeGoal') as number;
 
 	return metrics;
 }
@@ -134,9 +134,9 @@ export function activate(context: vscode.ExtensionContext) {
 		metrics = context.globalState.get("metrics") as Metrics; // if metrics are in global storage, read them
 	}
 
-	let config = vscode.workspace.getConfiguration('DevMetrics'); // get config
-	metrics.goalAdditionsMonth = config.get('devmetrics.additionsGoal') as number; // set configured additions goal
-	metrics.goalTimeMonth = config.get('devmetrics.timeGoal') as number; // set configured time goal
+	let config = vscode.workspace.getConfiguration('devmetrics'); // get config
+	metrics.goalAdditionsMonth = config.get('additionsGoal') as number; // set configured additions goal
+	metrics.goalTimeMonth = config.get('timeGoal') as number; // set configured time goal
 
 	const updateTimeTracker = () =>
 	/**
@@ -165,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 
-		metrics = updateMetrics(metrics, vscode.workspace.getConfiguration('DevMetrics'));
+		metrics = updateMetrics(metrics, vscode.workspace.getConfiguration('devmetrics'));
 		context.globalState.update("metrics", metrics); // write updated metrics to storage
 
 		const panel = vscode.window.createWebviewPanel(
@@ -179,7 +179,7 @@ export function activate(context: vscode.ExtensionContext) {
 		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
-			metrics = updateMetrics(metrics, vscode.workspace.getConfiguration('DevMetrics'));
+			metrics = updateMetrics(metrics, vscode.workspace.getConfiguration('devmetrics'));
 			context.globalState.update("metrics", metrics); // write updated metrics to storage
 			panel.webview.html = getWebviewContent(metrics);
 		  };
