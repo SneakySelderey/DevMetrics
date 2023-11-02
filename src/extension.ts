@@ -115,18 +115,6 @@ function updateMetrics(metrics: Metrics, config: vscode.WorkspaceConfiguration)
 	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
 	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
 
-	// update goals
-	if (metrics.goalAdditionsMonth !== config.get('additionsGoal') as number)
-	{
-		metrics.goalAdditionsMonth = config.get('additionsGoal') as number;
-		metrics.goalAdditionsReached = false;
-	}
-	if (metrics.goalTimeMonth !== config.get('timeGoal') as number)
-	{
-		metrics.goalTimeMonth = config.get('timeGoal') as number;
-		metrics.goalTimeReached = false;
-	}
-
 	return metrics;
 }
 
@@ -179,20 +167,40 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	{
 		if (metrics.goalAdditionsMonth !== -1 && metrics.additionsCount >= metrics.goalAdditionsMonth
-			&& metrics.goalAdditionsReached === false)
+			&& metrics.goalAdditionsReached === false) // if goal is active, incomplete and was reached
 			{
 				vscode.window.showInformationMessage("You've reached your month goal for additions! Congrats! 🎉");
-				metrics.goalAdditionsReached = true;
+				metrics.goalAdditionsReached = true; // set this goal as complete
 			}
 		if (metrics.goalTimeMonth !== -1 && metrics.hourCount >= metrics.goalTimeMonth
-			&& metrics.goalTimeReached === false)
+			&& metrics.goalTimeReached === false) // if goal is active, incomplete and was reached
 			{
 				vscode.window.showInformationMessage("You've reached your month goal for time spent in IDE! Congrats! 🎉");
-				metrics.goalTimeReached = true;
+				metrics.goalTimeReached = true; // set this goal as complete
 			}
 	};
 
 	setInterval(checkGoals, 1000); // check goals every second
+
+	const updateGoals = () =>
+	/**
+	 * Arrow function to update goals values.
+	 */
+	{
+		config = vscode.workspace.getConfiguration('devmetrics'); // get current config
+		if (metrics.goalAdditionsMonth !== config.get('additionsGoal') as number) // if add goal has changed
+	{
+		metrics.goalAdditionsMonth = config.get('additionsGoal') as number; // update goal
+		metrics.goalAdditionsReached = false; // set this goal as incomplete
+	}
+		if (metrics.goalTimeMonth !== config.get('timeGoal') as number) // if time goal has changed
+		{
+			metrics.goalTimeMonth = config.get('timeGoal') as number; // update goal
+			metrics.goalTimeReached = false; // set this goal as incomplete
+	}
+	};
+
+	setInterval(updateGoals, 1000); // update goals every second
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
