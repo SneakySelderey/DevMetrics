@@ -118,6 +118,8 @@ function updateMetrics(metrics: Metrics, config: vscode.WorkspaceConfiguration)
 	return metrics;
 }
 
+
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -202,6 +204,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	setInterval(updateGoals, 1000); // update goals every second
 
+	const updateMetricsObj = () =>
+	/**
+	 * Arrow function to update metrics object
+	 */
+	{
+		metrics = updateMetrics(metrics);
+	};
+
+	setInterval(updateMetricsObj, 1000) // update metrics every second
+
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
@@ -223,8 +235,6 @@ export function activate(context: vscode.ExtensionContext) {
 		  panel.webview.html = getWebviewContent(metrics);
 		// update webview every second
 		  const updateWebview = () => {
-			metrics = updateMetrics(metrics, vscode.workspace.getConfiguration('devmetrics'));
-			context.globalState.update("metrics", metrics); // write updated metrics to storage
 			panel.webview.html = getWebviewContent(metrics);
 		  };
 	
@@ -232,7 +242,14 @@ export function activate(context: vscode.ExtensionContext) {
 		  updateWebview();
 	
 		  // And schedule updates to the content every second
-		  setInterval(updateWebview, 1000);
+		  const webViewUpdateInterval = setInterval(updateWebview, 1000);
+
+		  panel.onDidDispose(
+			() => {
+			  // When the panel is closed, cancel any future updates to the webview content
+			  clearInterval(webViewUpdateInterval);
+			},
+			null, context.subscriptions);
 	});
 
 	let resetDataCommand = vscode.commands.registerCommand('devmetrics.resetData', () =>
