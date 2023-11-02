@@ -23,7 +23,7 @@ class Metrics
 	constructor(docsPrevState = {}, docsObj = {}, 
 		additionsCount = 0, deletionsCount = 0, additionsByDocs = [['N/A', 0]], 
 		deletionsByDocs = [['N/A', 0]], secondsCount = 0, minuteCount = 0, hourCount = 0,
-		currentMonth = (new Date().getMonth() + 1))
+		currentMonth = (new Date().getMonth() + 1), goalAdditionsMonth = -1, goalTimeMonth = -1)
 	{
 		this.docsPrevState = docsPrevState;
 		this.docsObj = docsObj;
@@ -35,6 +35,8 @@ class Metrics
 		this.minuteCount = minuteCount;
 		this.hourCount = hourCount;
 		this.currentMonth = currentMonth;
+		this.goalAdditionsMonth = goalAdditionsMonth;
+		this.goalTimeMonth = goalTimeMonth;
 	}
 
 	docsPrevState: IDictionary; // track initial state of docs
@@ -46,7 +48,9 @@ class Metrics
 	secondsCount; // number of seconds for time tracker
 	minuteCount; // number of minutes for time tracker
 	hourCount; // number of hours for time tracker
-	currentMonth;
+	currentMonth; // current month
+	goalAdditionsMonth; // additions goal for current month
+	goalTimeMonth; // time goal for current month
 }
 
 function updateActiveDocument(metrics: Metrics)
@@ -79,7 +83,7 @@ function updateMetrics(metrics: Metrics)
  * @returns Metrics class
  */
 {
-	if ((new Date().getMonth() + 1) !== metrics.currentMonth)
+	if ((new Date().getMonth() + 1) !== metrics.currentMonth) // if current month has changed
 	{
 		metrics = new Metrics(); // create new Metric object
 		metrics = updateActiveDocument(metrics); // update and write it to storage
