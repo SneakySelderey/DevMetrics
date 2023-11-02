@@ -231,33 +231,140 @@ function getWebviewContent(metrics: Metrics)
    * @returns - HTML structure.
 */
 {
-	return `<!DOCTYPE html>
-	<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>DevMetrics data</title>
-		</head>
-		<body>
-			<h2>Coding statistics</h2>
-			<ul>
-				<li>
-					<h3>Additions/deletions:</h3>
-					<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
-					<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
-				</li>
-				<li>
-					<h3>Top files by additions/deletions</h3>
-					<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
-					<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
-				</li>
-			</ul>
-			<h2>Time statistics<h2>
-			<ul>
-				<li>
-				<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
-				</li>
-			</ul>
-		</body>
-	</html>`;
+	if (metrics.goalAdditionsMonth !== -1 && metrics.goalTimeMonth !== -1)
+	{
+		return `<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>DevMetrics data</title>
+			</head>
+			<body>
+				<h2>Coding statistics</h2>
+				<ul>
+					<li>
+						<h3>Additions/deletions:</h3>
+						<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
+						<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
+					</li>
+					<li>
+						<h3>Top files by additions/deletions</h3>
+						<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+						<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+					</li>
+				</ul>
+				<h2>Time statistics<h2>
+				<ul>
+					<li>
+					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+					</li>
+				</ul>
+				<h2>Global goals progress</h2>
+				<p font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth}</p>
+				<p font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth}</p>
+			</body>
+		</html>`;
+	}
+	else if (metrics.goalAdditionsMonth === -1 && metrics.goalTimeMonth !== -1)
+	{
+		return `<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>DevMetrics data</title>
+			</head>
+			<body>
+				<h2>Coding statistics</h2>
+				<ul>
+					<li>
+						<h3>Additions/deletions:</h3>
+						<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
+						<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
+					</li>
+					<li>
+						<h3>Top files by additions/deletions</h3>
+						<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+						<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+					</li>
+				</ul>
+				<h2>Time statistics<h2>
+				<ul>
+					<li>
+					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+					</li>
+				</ul>
+				<h2>Global goals progress</h2>
+				<p font-size:16px;">Time: ${metrics.hourCount}/${metrics.goalTimeMonth}</p>
+			</body>
+		</html>`;
+	}
+	else if (metrics.goalAdditionsMonth !== -1 && metrics.goalTimeMonth === -1)
+	{
+		return `<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>DevMetrics data</title>
+			</head>
+			<body>
+				<h2>Coding statistics</h2>
+				<ul>
+					<li>
+						<h3>Additions/deletions:</h3>
+						<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
+						<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
+					</li>
+					<li>
+						<h3>Top files by additions/deletions</h3>
+						<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+						<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+					</li>
+				</ul>
+				<h2>Time statistics<h2>
+				<ul>
+					<li>
+					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+					</li>
+				</ul>
+				<h2>Global goals progress</h2>
+				<p font-size:16px;">Additions: ${metrics.additionsCount}/${metrics.goalAdditionsMonth}</p>
+			</body>
+		</html>`;
+	}
+	else if (metrics.goalAdditionsMonth === -1 && metrics.goalTimeMonth === -1)
+	{
+		return `<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>DevMetrics data</title>
+			</head>
+			<body>
+				<h2>Coding statistics</h2>
+				<ul>
+					<li>
+						<h3>Additions/deletions:</h3>
+						<p style="color: green; font-size:16px;">Lines of code added this month: ${metrics.additionsCount}</p>
+						<p style="color: red; font-size:16px;">Lines of code deleted this month: ${metrics.deletionsCount}</p>
+					</li>
+					<li>
+						<h3>Top files by additions/deletions</h3>
+						<p style="color: green; font-size:16px;">Top file by additions this month: ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][0]} - ${metrics.additionsByDocs[metrics.additionsByDocs.length - 1][1]} additions</p>
+						<p style="color: red; font-size:16px;">Top file by deletions this month: ${metrics.deletionsByDocs[0][0]} - ${metrics.deletionsByDocs[0][1]} deletions</p>
+					</li>
+				</ul>
+				<h2>Time statistics<h2>
+				<ul>
+					<li>
+					<p style="font-size:16px;">Time spent in IDE this month: ${metrics.hourCount}h ${metrics.minuteCount}min ${metrics.secondsCount}sec</p>
+					</li>
+				</ul>
+			</body>
+		</html>`;
+	}
+	return '';
   }
