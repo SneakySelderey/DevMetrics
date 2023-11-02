@@ -28,12 +28,14 @@
         "devmetrics.additionsGoal": {
           "type": "number",
           "default": 3000,
-          "description": "Sets global additions goal for the month (lines)"
+          "minimum": -1,
+          "description": "Sets global additions goal for the month (lines). Set to '-1' in order to turn off."
         },
         "devmetrics.timeGoal": {
           "type": "number",
           "default": 75,
-          "description": "Sets global time goal for the month (hours)"
+          "minimum": -1,
+          "description": "Sets global time goal for the month (hours). Set to '-1' in order to turn off."
         }
       }
     }
