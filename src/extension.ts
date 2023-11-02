@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import { Console } from 'console';
+import { globalAgent } from 'http';
 import * as vscode from 'vscode';
 
 interface IDictionary {
@@ -23,7 +24,8 @@ class Metrics
 	constructor(docsPrevState = {}, docsObj = {}, 
 		additionsCount = 0, deletionsCount = 0, additionsByDocs = [['N/A', 0]], 
 		deletionsByDocs = [['N/A', 0]], secondsCount = 0, minuteCount = 0, hourCount = 0,
-		currentMonth = (new Date().getMonth() + 1), goalAdditionsMonth = -1, goalTimeMonth = -1)
+		currentMonth = (new Date().getMonth() + 1), goalAdditionsMonth = -1, goalTimeMonth = -1,
+		goalAdditionsReached = false, goalTimeReached = false)
 	{
 		this.docsPrevState = docsPrevState;
 		this.docsObj = docsObj;
@@ -37,6 +39,8 @@ class Metrics
 		this.currentMonth = currentMonth;
 		this.goalAdditionsMonth = goalAdditionsMonth;
 		this.goalTimeMonth = goalTimeMonth;
+		this.goalAdditionsReached = goalAdditionsReached;
+		this.goalTimeReached = goalTimeReached;
 	}
 
 	docsPrevState: IDictionary; // track initial state of docs
@@ -51,6 +55,8 @@ class Metrics
 	currentMonth; // current month
 	goalAdditionsMonth; // additions goal for current month
 	goalTimeMonth; // time goal for current month
+	goalAdditionsReached; // flag, true if additions goal was reached
+	goalTimeReached; // flag, true if time goal was reached
 }
 
 function updateActiveDocument(metrics: Metrics)
@@ -109,8 +115,17 @@ function updateMetrics(metrics: Metrics, config: vscode.WorkspaceConfiguration)
 	metrics.additionsByDocs.sort((a, b) => a[1] < b[1] ? -1 : 1); // get top docs by additions
 	metrics.deletionsByDocs.sort((a, b) => a[1] > b[1] ? -1 : 1); // get top docs by deletions
 
-	metrics.goalAdditionsMonth = config.get('additionsGoal') as number; // update goals
-	metrics.goalTimeMonth = config.get('timeGoal') as number;
+	// update goals
+	if (metrics.goalAdditionsMonth !== config.get('additionsGoal') as number)
+	{
+		metrics.goalAdditionsMonth = config.get('additionsGoal') as number;
+		metrics.goalAdditionsReached = false;
+	}
+	if (metrics.goalTimeMonth !== config.get('timeGoal') as number)
+	{
+		metrics.goalTimeMonth = config.get('timeGoal') as number;
+		metrics.goalTimeReached = false;
+	}
 
 	return metrics;
 }
@@ -157,6 +172,27 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 
 	setInterval(updateTimeTracker, 1000); // update time tracker every second
+
+	const checkGoals = () =>
+	/**
+	 * Arrow function to check if goals were reached.
+	 */
+	{
+		if (metrics.goalAdditionsMonth !== -1 && metrics.additionsCount >= metrics.goalAdditionsMonth
+			&& metrics.goalAdditionsReached === false)
+			{
+				vscode.window.showInformationMessage("You've reached your month goal for additions! Congrats! 🎉");
+				metrics.goalAdditionsReached = true;
+			}
+		if (metrics.goalTimeMonth !== -1 && metrics.hourCount >= metrics.goalTimeMonth
+			&& metrics.goalTimeReached === false)
+			{
+				vscode.window.showInformationMessage("You've reached your month goal for time spent in IDE! Congrats! 🎉");
+				metrics.goalTimeReached = true;
+			}
+	};
+
+	setInterval(checkGoals, 1000); // check goals every second
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
