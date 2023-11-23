@@ -1,6 +1,8 @@
 # devmetrics README
 
-DevMetrics is a VS code extension that allows you to track your developer statistics right in your IDE.
+DevMetrics is a VS code extension that allows you to track your developer statistics right in your IDE. 
+ 
+Developed by Ershov Alexander, M3118
 
 ## Features
 
