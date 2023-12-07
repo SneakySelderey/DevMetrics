@@ -13,11 +13,11 @@ Current features are:
 - Metrics data storage between VS Code sessions
 - Global month additions and time goals
 
-<img src="images/features_example.png" width="400" />
+<img src="https://i.imgur.com/9NMmrDB.png" width="400" />
 
 ## Usage
 
 - To see the metrics, type in "Show DevMetrics data" command
 - To reset the metrics to their default values, type in "Reset DevMetrics data" command
 - To set global goals values or disable global goals tracker, go to Preferences->Settings->Extensions->DevMetrics
-<img src="images/settings_example.png" width="700" />
+<img src="https://i.imgur.com/hLVaugS.png" width="700" />
